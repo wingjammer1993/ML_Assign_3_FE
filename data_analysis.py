@@ -11,8 +11,10 @@ x_false = dfTrain.loc[dfTrain['spoiler'] == 0]
 len_true = [len(x) for x in list(x_true["sentence"])]
 len_false = [len(x) for x in list(x_false["sentence"])]
 
-plt.plot(len_true)
-plt.plot(len_false)
+l1, = plt.plot(len_true, label='True')
+l2, = plt.plot(len_false, label='False')
+plt.title('Length distribution')
+plt.legend(handles=[l1, l2])
 plt.show()
 
 unique_tropes = dfTrain.trope.unique()
