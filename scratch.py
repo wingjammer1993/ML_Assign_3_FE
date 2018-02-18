@@ -1,13 +1,28 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pylab as plt
+import nltk
+
+
+def contains_vbz(sentences):
+    feature_vec = [0]*len(sentences)
+    for index, sentence in enumerate(sentences):
+        text = nltk.word_tokenize(sentence)
+        tags = nltk.pos_tag(text)
+        for tag in tags:
+            if tag[-1] == 'VBZ':
+                feature_vec[index] = 1
+                break
+    return feature_vec
+
+
 
 
 class FeatEngr:
     def __init__(self):
-        from sklearn.feature_extraction.text import CountVectorizer
+        from sklearn.feature_extraction.text import TfidfVectorizer
 
-        self.vectorizer = CountVectorizer()
+        self.vectorizer = TfidfVectorizer()
 
     def build_train_features(self, examples):
         """
@@ -25,7 +40,9 @@ class FeatEngr:
         feature_2 = trope_vectorizer.fit_transform(list(examples["trope"]))
         feature_3 = page_vectorizer.fit_transform(list(examples["page"]))
         feature_4 = [len(x) for x in list(examples["sentence"])]
-        training_vec = sp.sparse.hstack((feature_1, feature_2, feature_3, csr_matrix(feature_4).T))
+        feature_5 = contains_vbz(list(examples["sentence"]))
+        training_vec = sp.sparse.hstack((feature_1, feature_2, feature_3, csr_matrix(feature_4).T,
+                                         csr_matrix(feature_5).T))
         return training_vec
 
     def get_test_features(self, examples):
