@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pylab as plt
 import nltk
+import data_analysis_6
 
 
 class FeatEngr:
@@ -22,6 +23,7 @@ class FeatEngr:
 
         trope_vectorizer = CountVectorizer()
         page_vectorizer = CountVectorizer()
+        feature_5 = data_analysis_6.give_genre_vector(list(examples["page"]))
         feature_1 = self.vectorizer.fit_transform(list(examples["sentence"]))
         feature_2 = trope_vectorizer.fit_transform(list(examples["trope"]))
         feature_3 = page_vectorizer.fit_transform(list(examples["page"]))
