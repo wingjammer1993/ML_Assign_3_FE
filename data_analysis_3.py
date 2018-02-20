@@ -11,15 +11,31 @@ x_false = dfTrain.loc[dfTrain['spoiler'] == 0]
 true_sentences = list(x_true['sentence'])
 false_sentences = list(x_false['sentence'])
 
-true = {}
+true = {'pos': 0, 'neg': 0, 'neu': 0, 'compound': 0}
 sid = SentimentIntensityAnalyzer()
 for sentence in true_sentences:
-    print(sentence)
     ss = sid.polarity_scores(sentence)
-    for k in ss:
-        print('{0}: {1}, '.format(k, ss[k]), end='')
-        if k in true:
-            true[k] +=1
-        else:
-            true[k] = 1
+    if ss['pos'] > 0.5:
+        true['pos'] += 1
+    if ss['neg'] > 0.5:
+        true['neg'] += 1
+    if ss['neu'] > 0.5:
+        true['neu'] += 1
+    if -0.5 > ss['compound'] or ss['compound'] > 0.5:
+        true['compound'] += 1
+
+false = {'pos': 0, 'neg': 0, 'neu': 0, 'compound': 0}
+sid = SentimentIntensityAnalyzer()
+for sentence in false_sentences:
+    ss = sid.polarity_scores(sentence)
+    if ss['pos'] > 0.5:
+        false['pos'] += 1
+    if ss['neg'] > 0.5:
+        false['neg'] += 1
+    if ss['neu'] > 0.5:
+        false['neu'] += 1
+    if -0.5 > ss['compound'] or ss['compound'] > 0.5:
+        false['compound'] += 1
+
 print(true)
+print(false)
