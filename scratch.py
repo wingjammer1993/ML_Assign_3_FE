@@ -4,23 +4,31 @@ import matplotlib.pylab as plt
 import nltk
 from nltk.stem import *
 from nltk.stem.porter import *
+from nltk import word_tokenize
+from nltk.stem import WordNetLemmatizer
 
 
-def stem_sentences(examples):
+def stem_pos_sentences(examples):
     new_examples = []
+    new_pos = []
     stemmer = PorterStemmer()
+    lemmer = WordNetLemmatizer()
     for ex in examples:
-        gen_list = ex.split(' ')
-        singles = [stemmer.stem(ex) for ex in gen_list]
+        gen_list = word_tokenize(ex)
+        pos = nltk.pos_tag(gen_list)
+        pos = [p[-1] for p in pos if p[-1]]
+        lemms = [lemmer.lemmatize(ex) for ex in gen_list]
+        singles = [stemmer.stem(ex) for ex in lemms]
         new_examples.append(' '.join(singles))
-    return new_examples
+        new_pos.append(' '.join(pos))
+    return new_examples, new_pos
 
 
 class FeatEngr:
     def __init__(self):
         from sklearn.feature_extraction.text import TfidfVectorizer
 
-        self.vectorizer = TfidfVectorizer()
+        self.vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words={'English'})
 
     def build_train_features(self, examples):
         """
@@ -32,14 +40,11 @@ class FeatEngr:
         import scipy as sp
         from scipy.sparse import csr_matrix
 
-        trope_vectorizer = CountVectorizer()
-        page_vectorizer = CountVectorizer()
-        stemmed_sentences = stem_sentences(list(examples["sentence"]))
+        tag_vectorizer = CountVectorizer(ngram_range=(1, 2))
+        stemmed_sentences, tags = stem_pos_sentences(list(examples["sentence"]))
         feature_1 = self.vectorizer.fit_transform(stemmed_sentences)
-        feature_2 = trope_vectorizer.fit_transform(list(examples["trope"]))
-        feature_3 = page_vectorizer.fit_transform(list(examples["page"]))
-        feature_4 = [len(x) for x in list(examples["sentence"])]
-        training_vec = sp.sparse.hstack((feature_1, feature_2, feature_3, csr_matrix(feature_4).T))
+        feature_2 = tag_vectorizer.fit_transform(tags)
+        training_vec = sp.sparse.hstack((feature_1, feature_2))
         return training_vec
 
     def get_test_features(self, examples):
