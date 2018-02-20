@@ -1,6 +1,7 @@
 import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import pandas as pd
+import re
 
 dfTrain = pd.read_csv("train.csv")
 
@@ -8,8 +9,19 @@ dfTrain = pd.read_csv("train.csv")
 x_true = dfTrain.loc[dfTrain['spoiler'] == 1]
 x_false = dfTrain.loc[dfTrain['spoiler'] == 0]
 
-true_sentences = list(x_true['sentence'])
-false_sentences = list(x_false['sentence'])
+true_se = list(x_true['trope'])
+false_se = list(x_false['trope'])
+true_sentences = []
+false_sentences = []
+
+for x in true_se:
+    k = re.sub(r"\B([A-Z])", r" \1", x)
+    true_sentences.append(k)
+
+for x in false_se:
+    k = re.sub(r"\B([A-Z])", r" \1", x)
+    false_sentences.append(k)
+
 
 true = {'pos': 0, 'neg': 0, 'neu': 0, 'compound': 0}
 sid = SentimentIntensityAnalyzer()

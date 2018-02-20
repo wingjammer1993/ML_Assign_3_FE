@@ -24,11 +24,28 @@ def stem_pos_sentences(examples):
     return new_examples, new_pos
 
 
+def stem_pos_tropes(examples):
+    new_examples = []
+    stemmer = PorterStemmer()
+    lemmer = WordNetLemmatizer()
+    for ex in examples:
+        ex = re.sub(r"\B([A-Z])", r" \1", ex)
+        gen_list = word_tokenize(ex)
+        lemms = [lemmer.lemmatize(ex) for ex in gen_list]
+        singles = [stemmer.stem(ex) for ex in lemms]
+        new_examples.append(' '.join(singles))
+    return new_examples
+
+
+
 class FeatEngr:
     def __init__(self):
         from sklearn.feature_extraction.text import TfidfVectorizer
-
+        from sklearn.feature_extraction.text import CountVectorizer
         self.vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words={'English'})
+        self.page_vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words={'English'})
+        self.tag_vectorizer = CountVectorizer()
+
 
     def build_train_features(self, examples):
         """
@@ -36,15 +53,16 @@ class FeatEngr:
         Most of the work in this homework will go here, or in similar functions
         :param examples: currently just a list of forum posts
         """
-        from sklearn.feature_extraction.text import CountVectorizer
+
         import scipy as sp
         from scipy.sparse import csr_matrix
 
-        tag_vectorizer = CountVectorizer(ngram_range=(1, 2))
         stemmed_sentences, tags = stem_pos_sentences(list(examples["sentence"]))
+        stemmed_pages = stem_pos_tropes(list(examples["trope"]))
         feature_1 = self.vectorizer.fit_transform(stemmed_sentences)
-        feature_2 = tag_vectorizer.fit_transform(tags)
-        training_vec = sp.sparse.hstack((feature_1, feature_2))
+        feature_2 = self.tag_vectorizer.fit_transform(tags)
+        feature_3 = self.page_vectorizer.fit_transform(stemmed_pages)
+        training_vec = sp.sparse.hstack((feature_1, feature_2, feature_3))
         return training_vec
 
     def get_test_features(self, examples):
