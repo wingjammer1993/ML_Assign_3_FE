@@ -2,7 +2,18 @@ import numpy as np
 import pandas as pd
 import matplotlib.pylab as plt
 import nltk
-import data_analysis_6
+from nltk.stem import *
+from nltk.stem.porter import *
+
+
+def stem_sentences(examples):
+    new_examples = []
+    stemmer = PorterStemmer()
+    for ex in examples:
+        gen_list = ex.split(' ')
+        singles = [stemmer.stem(ex) for ex in gen_list]
+        new_examples.append(' '.join(singles))
+    return new_examples
 
 
 class FeatEngr:
@@ -23,12 +34,13 @@ class FeatEngr:
 
         trope_vectorizer = CountVectorizer()
         page_vectorizer = CountVectorizer()
-        feature_1 = self.vectorizer.fit_transform(list(examples["sentence"]))
+        stemmed_sentences = stem_sentences(list(examples["sentence"]))
+        feature_1 = self.vectorizer.fit_transform(stemmed_sentences)
         feature_2 = trope_vectorizer.fit_transform(list(examples["trope"]))
         feature_3 = page_vectorizer.fit_transform(list(examples["page"]))
         feature_4 = [len(x) for x in list(examples["sentence"])]
         training_vec = sp.sparse.hstack((feature_1, feature_2, feature_3, csr_matrix(feature_4).T))
-        return training_vec
+        return feature_1
 
     def get_test_features(self, examples):
         """
