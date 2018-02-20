@@ -40,7 +40,7 @@ class FeatEngr:
         feature_3 = page_vectorizer.fit_transform(list(examples["page"]))
         feature_4 = [len(x) for x in list(examples["sentence"])]
         training_vec = sp.sparse.hstack((feature_1, feature_2, feature_3, csr_matrix(feature_4).T))
-        return feature_1
+        return training_vec
 
     def get_test_features(self, examples):
         """
