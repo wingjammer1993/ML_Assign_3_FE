@@ -8,7 +8,6 @@ def genre_feature(examples):
     genre = pd.read_csv("genre.csv", names=['series', 'genre'])
     genre_vec = ['unknown']*len(examples)
     for idx, series in enumerate(examples):
-        print(idx)
         k = genre.loc[genre['series'] == series]
         try:
             if k['genre'].values:
