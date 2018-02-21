@@ -9,6 +9,7 @@ from nltk.stem import WordNetLemmatizer
 import data_analysis_9
 import data_analysis_8
 
+
 def stem_pos_sentences(examples):
     new_examples = []
     new_pos = []
@@ -62,12 +63,10 @@ class FeatEngr:
 
         stemmed_sentences, tags = stem_pos_sentences(list(examples["sentence"]))
         stemmed_pages = stem_pos_tropes(list(examples["trope"]))
-        genre = data_analysis_9.genre_feature(list(examples["page"]))
         feature_1 = self.vectorizer.fit_transform(stemmed_sentences)
         feature_2 = self.tag_vectorizer.fit_transform(tags)
         feature_3 = self.page_vectorizer.fit_transform(stemmed_pages)
-        feature_4 = self.genre_vectorizer.fit_transform(genre)
-        training_vec = sp.sparse.hstack((feature_1, feature_2, feature_3, feature_4))
+        training_vec = sp.sparse.hstack((feature_1, feature_2, feature_3))
         return training_vec
 
     def get_test_features(self, examples):
