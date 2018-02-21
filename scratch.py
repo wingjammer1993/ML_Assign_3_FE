@@ -6,7 +6,8 @@ from nltk.stem import *
 from nltk.stem.porter import *
 from nltk import word_tokenize
 from nltk.stem import WordNetLemmatizer
-
+import data_analysis_9
+import data_analysis_8
 
 def stem_pos_sentences(examples):
     new_examples = []
@@ -45,6 +46,8 @@ class FeatEngr:
         self.vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words={'English'})
         self.page_vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words={'English'})
         self.tag_vectorizer = CountVectorizer()
+        self.genre_vectorizer = TfidfVectorizer(use_idf=False, norm='l2')
+
 
 
     def build_train_features(self, examples):
@@ -59,10 +62,12 @@ class FeatEngr:
 
         stemmed_sentences, tags = stem_pos_sentences(list(examples["sentence"]))
         stemmed_pages = stem_pos_tropes(list(examples["trope"]))
+        genre = data_analysis_9.genre_feature(list(examples["page"]))
         feature_1 = self.vectorizer.fit_transform(stemmed_sentences)
         feature_2 = self.tag_vectorizer.fit_transform(tags)
         feature_3 = self.page_vectorizer.fit_transform(stemmed_pages)
-        training_vec = sp.sparse.hstack((feature_1, feature_2, feature_3))
+        feature_4 = self.genre_vectorizer.fit_transform(genre)
+        training_vec = sp.sparse.hstack((feature_1, feature_2, feature_3, feature_4))
         return training_vec
 
     def get_test_features(self, examples):
@@ -77,7 +82,7 @@ class FeatEngr:
         prints the top 10 features for the positive class and the
         top 10 features for the negative class.
         """
-        feature_names = np.asarray(self.vectorizer.get_feature_names())
+        feature_names = np.asarray(self.tag_vectorizer.get_feature_names())
         top10 = np.argsort(self.logreg.coef_[0])[-10:]
         bottom10 = np.argsort(self.logreg.coef_[0])[:10]
         print("Pos: %s" % " ".join(feature_names[top10]))
@@ -109,9 +114,11 @@ class FeatEngr:
         from sklearn.metrics import accuracy_score
         from sklearn.model_selection import KFold
         from scipy.sparse import csr_matrix
+        from sklearn.metrics import confusion_matrix
 
         # load data
         dfTrain = pd.read_csv("train.csv")
+        sentences = list(dfTrain["sentence"])
 
         # get training features and labels
         self.X_train = self.build_train_features(dfTrain)
@@ -127,6 +134,13 @@ class FeatEngr:
             self.logreg.fit(x_train, y_train)
             y_pred = self.logreg.predict(x_test)
             acc = accuracy_score(y_test, y_pred)
+            for index, i in enumerate(y_test):
+                if y_test[index] != y_pred[index]:
+                    required_index = test_index[index]
+                    print(sentences[required_index])
+                    print(y_test[index])
+                    print(y_pred[index])
+
             accuracy.append(acc)
         print(sum(accuracy)/len(accuracy))
 
