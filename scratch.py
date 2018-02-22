@@ -47,8 +47,6 @@ class FeatEngr:
         self.vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words={'English'})
         self.page_vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words={'English'})
         self.tag_vectorizer = CountVectorizer()
-        self.genre_vectorizer = TfidfVectorizer(use_idf=False, norm='l2')
-
 
 
     def build_train_features(self, examples):
