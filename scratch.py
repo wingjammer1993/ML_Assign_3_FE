@@ -41,7 +41,6 @@ def stem_pos_sentences(examples):
     new_pos = []
     stemmer = PorterStemmer()
     lemmer = WordNetLemmatizer()
-    count = 0
     for ex in examples:
         gen_list = word_tokenize(ex)
         pos = nltk.pos_tag(gen_list)
@@ -50,9 +49,7 @@ def stem_pos_sentences(examples):
         singles = [stemmer.stem(ex) for ex in lemms]
         new_examples.append(' '.join(singles))
         new_pos.append(' '.join(pos))
-        count +=1
-        print(count)
-        return new_examples, new_pos
+    return new_examples, new_pos
 
 
 
@@ -79,7 +76,7 @@ class FeatEngr:
         self.vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words={'English'})
         self.page_vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words={'English'})
         self.tag_vectorizer = CountVectorizer()
-        self.logreg = LogisticRegression()
+
 
 
     def build_train_features(self, examples):
