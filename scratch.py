@@ -1,20 +1,47 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pylab as plt
 import nltk
-from nltk.stem import *
 from nltk.stem.porter import *
 from nltk import word_tokenize
 from nltk.stem import WordNetLemmatizer
-import data_analysis_9
-import data_analysis_8
+from sklearn.base import BaseEstimator, TransformerMixin
 
+class ItemSelector(BaseEstimator, TransformerMixin):
+    def __init__(self, key):
+        self.key = key
 
-def stem_pos_sentences(examples):
+    def fit(self, x, y=None):
+        return self
+
+    def transform(self, data_dict):
+            return stem_pos_sentences(list(data_dict[self.key]), 1)
+
+class ItemSelector3(BaseEstimator, TransformerMixin):
+    def __init__(self, key):
+        self.key = key
+
+    def fit(self, x, y=None):
+        return self
+
+    def transform(self, data_dict):
+            return stem_pos_sentences(list(data_dict[self.key]), 2)
+
+class ItemSelector2(BaseEstimator, TransformerMixin):
+    def __init__(self, key):
+        self.key = key
+
+    def fit(self, x, y=None):
+        return self
+
+    def transform(self, data_dict):
+            return stem_pos_tropes(list(data_dict[self.key]))
+
+def stem_pos_sentences(examples, tag=1):
     new_examples = []
     new_pos = []
     stemmer = PorterStemmer()
     lemmer = WordNetLemmatizer()
+    count = 0
     for ex in examples:
         gen_list = word_tokenize(ex)
         pos = nltk.pos_tag(gen_list)
@@ -23,7 +50,12 @@ def stem_pos_sentences(examples):
         singles = [stemmer.stem(ex) for ex in lemms]
         new_examples.append(' '.join(singles))
         new_pos.append(' '.join(pos))
-    return new_examples, new_pos
+        count +=1
+        print(count)
+    if tag == 1:
+        return new_examples
+    else:
+        return new_pos
 
 
 def stem_pos_tropes(examples):
@@ -42,11 +74,14 @@ def stem_pos_tropes(examples):
 
 class FeatEngr:
     def __init__(self):
+
+        from sklearn.linear_model import LogisticRegression
         from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.feature_extraction.text import CountVectorizer
         self.vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words={'English'})
         self.page_vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words={'English'})
         self.tag_vectorizer = CountVectorizer()
+        self.logreg = LogisticRegression()
 
 
     def build_train_features(self, examples):
@@ -127,7 +162,6 @@ class FeatEngr:
         for train_index, test_index in kf.split(self.X_train):
             x_train, x_test = csr_matrix(self.X_train)[train_index], csr_matrix(self.X_train)[test_index]
             y_train, y_test = self.y_train[train_index], self.y_train[test_index]
-            self.logreg = LogisticRegression(random_state=random_state)
             self.logreg.fit(x_train, y_train)
             y_pred = self.logreg.predict(x_test)
             acc = accuracy_score(y_test, y_pred)
@@ -142,6 +176,42 @@ class FeatEngr:
         print(sum(accuracy)/len(accuracy))
 
 
+
+    def pipeline(self, random_state):
+
+        from sklearn.model_selection import KFold
+        from sklearn.pipeline import Pipeline
+        from sklearn.model_selection import cross_val_score
+        from sklearn.pipeline import FeatureUnion
+        from sklearn.decomposition import TruncatedSVD
+
+        dfTrain = pd.read_csv("train.csv")
+        sentences = list(dfTrain["sentence"])
+
+        # get training features and labels
+        self.y_train = np.array(dfTrain["spoiler"], dtype=int)
+
+        pipeline = Pipeline([
+            ('union', FeatureUnion(
+                transformer_list=[
+                    ('sent', Pipeline([
+                        ('selector', ItemSelector(key='sentence')),
+                        ('vect', self.vectorizer)])),
+                    ('pos', Pipeline([
+                        ('selector', ItemSelector3(key='sentence')),
+                        ('vect', self.tag_vectorizer),
+                        ('best', TruncatedSVD(n_components=20))])),
+                    ('trope', Pipeline([
+                        ('selector', ItemSelector2(key='trope')),
+                        ('vect', self.page_vectorizer)])), ]
+            )),
+
+            ('clf', self.logreg),
+        ])
+
+        kfold = KFold(n_splits=10, random_state=random_state, shuffle=True)
+        results = cross_val_score(pipeline, dfTrain, self.y_train, cv=kfold)
+        print(sum(results)/len(results))
 
 
     def model_predict(self):
@@ -167,7 +237,7 @@ class FeatEngr:
 feat = FeatEngr()
 
 # Train your Logistic Regression classifier
-feat.train_test_validation_model(random_state=1230)
+feat.pipeline(random_state=1230)
 
 # Shows the top 10 features for each class
 #feat.show_top10()
