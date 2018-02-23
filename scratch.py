@@ -36,7 +36,7 @@ class ItemSelector2(BaseEstimator, TransformerMixin):
     def transform(self, data_dict):
             return stem_pos_tropes(list(data_dict[self.key]))
 
-def stem_pos_sentences(examples, tag=1):
+def stem_pos_sentences(examples):
     new_examples = []
     new_pos = []
     stemmer = PorterStemmer()
@@ -52,10 +52,8 @@ def stem_pos_sentences(examples, tag=1):
         new_pos.append(' '.join(pos))
         count +=1
         print(count)
-    if tag == 1:
-        return new_examples
-    else:
-        return new_pos
+        return new_examples, new_pos
+
 
 
 def stem_pos_tropes(examples):
