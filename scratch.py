@@ -152,6 +152,7 @@ class FeatEngr:
         self.y_train = np.array(dfTrain["spoiler"], dtype=int)
 
         # train logistic regression model.  !!You MAY NOT CHANGE THIS!!
+        self.logreg = LogisticRegression(random_state=random_state)
         accuracy = []
         kf = KFold(n_splits=10, random_state=None, shuffle=True)
         for train_index, test_index in kf.split(self.X_train):
