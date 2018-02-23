@@ -184,6 +184,7 @@ class FeatEngr:
         from sklearn.model_selection import cross_val_score
         from sklearn.pipeline import FeatureUnion
         from sklearn.decomposition import TruncatedSVD
+        from sklearn.model_selection import GridSearchCV
 
         dfTrain = pd.read_csv("train.csv")
         sentences = list(dfTrain["sentence"])
@@ -237,7 +238,8 @@ class FeatEngr:
 feat = FeatEngr()
 
 # Train your Logistic Regression classifier
-feat.pipeline(random_state=1230)
+feat.train_test_validation_model(random_state=1234)
+
 
 # Shows the top 10 features for each class
 #feat.show_top10()
