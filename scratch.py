@@ -14,7 +14,7 @@ class ItemSelector(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, data_dict):
-            return stem_pos_sentences(list(data_dict[self.key]), 1)
+            return stem_pos_sentences(list(data_dict[self.key]))
 
 class ItemSelector3(BaseEstimator, TransformerMixin):
     def __init__(self, key):
@@ -24,7 +24,7 @@ class ItemSelector3(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, data_dict):
-            return stem_pos_sentences(list(data_dict[self.key]), 2)
+            return stem_pos(list(data_dict[self.key]))
 
 class ItemSelector2(BaseEstimator, TransformerMixin):
     def __init__(self, key):
@@ -43,15 +43,19 @@ def stem_pos_sentences(examples):
     lemmer = WordNetLemmatizer()
     for ex in examples:
         gen_list = word_tokenize(ex)
-        pos = nltk.pos_tag(gen_list)
-        pos = [p[-1] for p in pos if p[-1]]
         lemms = [lemmer.lemmatize(ex) for ex in gen_list]
         singles = [stemmer.stem(ex) for ex in lemms]
         new_examples.append(' '.join(singles))
+    return new_examples
+
+def stem_pos(examples):
+    new_pos = []
+    for ex in examples:
+        gen_list = word_tokenize(ex)
+        pos = nltk.pos_tag(gen_list)
+        pos = [p[-1] for p in pos if p[-1]]
         new_pos.append(' '.join(pos))
-    return new_examples, new_pos
-
-
+    return new_pos
 
 def stem_pos_tropes(examples):
     new_examples = []
@@ -67,6 +71,7 @@ def stem_pos_tropes(examples):
 
 
 
+
 class FeatEngr:
     def __init__(self):
 
@@ -74,8 +79,9 @@ class FeatEngr:
         from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.feature_extraction.text import CountVectorizer
         self.vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words={'English'})
-        self.page_vectorizer = TfidfVectorizer(ngram_range=(1, 2), stop_words={'English'})
+        self.page_vectorizer = CountVectorizer(ngram_range=(1, 2), stop_words={'English'})
         self.tag_vectorizer = CountVectorizer()
+        self.logreg = LogisticRegression()
 
 
 
@@ -89,7 +95,8 @@ class FeatEngr:
         import scipy as sp
         from scipy.sparse import csr_matrix
 
-        stemmed_sentences, tags = stem_pos_sentences(list(examples["sentence"]))
+        stemmed_sentences = stem_pos_sentences(list(examples["sentence"]))
+        tags = stem_pos(list(examples["sentence"]))
         stemmed_pages = stem_pos_tropes(list(examples["trope"]))
         feature_1 = self.vectorizer.fit_transform(stemmed_sentences)
         feature_2 = self.tag_vectorizer.fit_transform(tags)
@@ -146,7 +153,7 @@ class FeatEngr:
         # load data
         dfTrain = pd.read_csv("train.csv")
         sentences = list(dfTrain["sentence"])
-
+        trope = list(dfTrain["trope"])
         # get training features and labels
         self.X_train = self.build_train_features(dfTrain)
         self.y_train = np.array(dfTrain["spoiler"], dtype=int)
@@ -165,6 +172,7 @@ class FeatEngr:
                 if y_test[index] != y_pred[index]:
                     required_index = test_index[index]
                     print(sentences[required_index])
+                    print(trope[required_index])
                     print(y_test[index])
                     print(y_pred[index])
 
@@ -177,6 +185,7 @@ class FeatEngr:
 
         from sklearn.model_selection import KFold
         from sklearn.pipeline import Pipeline
+        from sklearn.model_selection import cross_val_score
         from sklearn.model_selection import cross_val_score
         from sklearn.pipeline import FeatureUnion
         from sklearn.decomposition import TruncatedSVD
@@ -196,8 +205,7 @@ class FeatEngr:
                         ('vect', self.vectorizer)])),
                     ('pos', Pipeline([
                         ('selector', ItemSelector3(key='sentence')),
-                        ('vect', self.tag_vectorizer),
-                        ('best', TruncatedSVD(n_components=20))])),
+                        ('vect', self.tag_vectorizer)])),
                     ('trope', Pipeline([
                         ('selector', ItemSelector2(key='trope')),
                         ('vect', self.page_vectorizer)])), ]

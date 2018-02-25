@@ -12,42 +12,42 @@ x_false = dfTrain.loc[dfTrain['spoiler'] == 0]
 true_sentences = list(x_true['sentence'])
 false_sentences = list(x_false['sentence'])
 
-true = {'VBD': 0, 'VBG': 0, 'VBN': 0, 'VBP': 0, 'VBZ': 0, 'UH': 0}
-false = {'VBD': 0, 'VBG': 0, 'VBN': 0, 'VBP': 0, 'VBZ': 0, 'UH': 0}
+true = {'WP': 0, 'IN': 0, 'EX': 0, 'PRP': 0, 'CC': 0, 'VBZ': 0}
+false = {'WP': 0, 'IN': 0, 'EX': 0, 'PRP': 0, 'CC': 0, 'VBZ': 0}
 
 for sentence in true_sentences:
     text = nltk.word_tokenize(sentence)
     tags = nltk.pos_tag(text)
     for tag in tags:
-        if tag[-1] == 'VBD':
-            true['VBD'] += 1
-        if tag[-1] == 'VBG':
-            true['VBG'] += 1
-        if tag[-1] == 'VBN':
-            true['VBN'] += 1
-        if tag[-1] == 'VBP':
-            true['VBP'] += 1
+        if tag[-1] == 'WP':
+            true['WP'] += 1
+        if tag[-1] == 'IN':
+            true['IN'] += 1
+        if tag[-1] == 'EX':
+            true['EX'] += 1
+        if tag[-1] == 'PRP':
+            true['PRP'] += 1
+        if tag[-1] == 'CC':
+            true['CC'] += 1
         if tag[-1] == 'VBZ':
             true['VBZ'] += 1
-        if tag[-1] == 'UH':
-            true['UH'] += 1
 
 for sentence in false_sentences:
     text = nltk.word_tokenize(sentence)
     tags = nltk.pos_tag(text)
     for tag in tags:
-        if tag[-1] == 'VBD':
-            false['VBD'] += 1
-        if tag[-1] == 'VBG':
-            false['VBG'] += 1
-        if tag[-1] == 'VBN':
-            false['VBN'] += 1
-        if tag[-1] == 'VBP':
-            false['VBP'] += 1
+        if tag[-1] == 'WP':
+            false['WP'] += 1
+        if tag[-1] == 'IN':
+            false['IN'] += 1
+        if tag[-1] == 'EX':
+            false['EX'] += 1
+        if tag[-1] == 'PRP':
+            false['PRP'] += 1
+        if tag[-1] == 'CC':
+            false['CC'] += 1
         if tag[-1] == 'VBZ':
             false['VBZ'] += 1
-        if tag[-1] == 'UH':
-            false['UH'] += 1
 
 
 plt.bar(true.keys(), true.values())
